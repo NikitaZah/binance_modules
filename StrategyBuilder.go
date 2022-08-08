@@ -25,6 +25,7 @@ func NewStrategyBuilder(client *futures.Client, symbol string) (*StrategyBuilder
 func (SB *StrategyBuilder) RegisterStrategy(strategy BaseStrategyInterface) {
 	strategy.SetClient(SB.client)
 	strategy.SetSymbol(SB.symbol)
+	strategy.SetLogger()
 }
 
 func (SB *StrategyBuilder) LaunchAccount(strategy AccountStrategyInterface) error {
