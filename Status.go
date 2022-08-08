@@ -2,9 +2,11 @@ package binance_modules
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/sirupsen/logrus"
 )
 
 type Status struct {
@@ -12,36 +14,66 @@ type Status struct {
 	Balance  *futures.Balance
 	Position *futures.PositionRisk
 	Orders   []*futures.Order
+	log      *Logger
 }
 
 func NewStatus(client *futures.Client, symbol string) (*Status, error) {
 	status := new(Status)
+	lg, err := GetLogger()
+	if err != nil {
+		fmt.Printf(err.Error())
+		return status, err
+	}
+	status.log = lg
 	status.symbol = symbol
 
 	underlyingAsset := symbol[len(symbol)-4:]
 
 	balances, err := client.NewGetBalanceService().Do(context.Background())
 	if err != nil {
+		status.log.WithFields(logrus.Fields{
+			"symbol": status.symbol,
+			"err":    err.Error(),
+		}).Error("Failed to get balance")
+
 		return status, err
 	}
 	for _, balance := range balances {
 		if balance.Asset == underlyingAsset {
 			status.Balance = balance
+			status.log.WithFields(logrus.Fields{
+				"symbol":  status.symbol,
+				"balance": balance.Asset,
+			}).Info("Successfully got balance")
 			break
 		}
 	}
 
 	positions, err := client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
 	if err != nil {
+		status.log.WithFields(logrus.Fields{
+			"symbol": status.symbol,
+			"err":    err.Error(),
+		}).Error("Failed to get position risk")
 		return status, err
 	}
 	status.Position = positions[0]
+	status.log.WithFields(logrus.Fields{
+		"symbol": status.symbol,
+	}).Info("Successfully got position for symbol")
 
 	orders, err := client.NewListOpenOrdersService().Symbol(symbol).Do(context.Background())
 	if err != nil {
+		status.log.WithFields(logrus.Fields{
+			"symbol": status.symbol,
+			"err":    err.Error(),
+		}).Error("Failed to get orders for symbol")
 		return status, err
 	}
 	status.Orders = orders
+	status.log.WithFields(logrus.Fields{
+		"symbol": status.symbol,
+	}).Info("Successfully got orders for symbol")
 
 	return status, nil
 }
