@@ -28,6 +28,10 @@ func (SB *StrategyBuilder) RegisterStrategy(strategy BaseStrategyInterface) {
 	strategy.SetLogger()
 }
 
+func (SB *StrategyBuilder) InitializeStrategy(strategy Strategy) {
+	strategy.Initialize()
+}
+
 func (SB *StrategyBuilder) LaunchAccount(strategy AccountStrategyInterface) error {
 	var err error
 	err = strategy.InitAccount()
